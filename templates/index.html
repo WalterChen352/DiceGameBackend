@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></script>
+</head>
+<body>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src = "{{ url_for('static', filename='js/main.js') }}"></script>
+    <h1>Welcome to my test dice game page</h1>
+    <div id="login">
+    <form>
+        <label for="username">username:</label>
+        <input type="text" id = "username" name="username"> </input><br>
+        <input type="submit" id="loginButton" value="login">
+    </form>
+    </div>
+    <div id = "lobby">
+    
+    <form id = "makeGameForm">
+        <input type = "number" id = "startingLives" name="startingLives" min="1" max="10" value="6">Heart Dice</input><br>
+        <input type = "submit" id ="makeGameButton">Make game</input>
+    </form>
+    <form id = "joinGameForm">
+        <label for="gameInput">Game Code:</label>
+        <input type="text" id = "gameInput" name="gameInput"> </input><br>
+        <input type="submit" value="Join">
+    </form>
+    <div id = "LobbyControls">
+    <button id="LeaveGame">Leave Game</button>
+    <button id="StartGame">Start Game</button>
+    </div>
+    </div>
+    <div id = "Game">
+        <h2 id = TurnIndicator>It's Your Turn</h2>
+        <form id = "bidForm">
+            <input type = "number" id = "bidQuantity" name = "bidQuantity" min = "1">Quantity</input>
+            <input type = "number" id = "bidFace" name = "bidFace" min = "1">Face</input><br>
+            Challenge? <input type = "checkbox" id ="challenge" name ="challenge"><br>
+            <input type = "submit" id = "submitBid" name = "submitBid"></input>
+        </form>
+    </div>
+</body>
+</html>

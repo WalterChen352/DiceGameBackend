@@ -1,0 +1,44 @@
+.loggedIn #login{
+    display: none;
+}
+
+.loggedOut #lobby{
+    display: none;
+}
+
+h1{
+    color: red;
+}
+
+.inLobby #makeGameForm{
+    display: none
+}
+
+.inLobby #joinGameForm{
+    display: none;
+}
+
+#LobbyControls{
+    display: none;
+}
+.inLobby #LobbyControls{
+    display: block;
+}
+
+
+
+#TurnIndicator{
+    display: none;
+}
+
+.PlayerTurn #TurnIndicator{
+    display: block;
+}
+
+#bidForm{
+    display: none;
+}
+
+.PlayerTurn #bidForm{
+    display: block;
+}
