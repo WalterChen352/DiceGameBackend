@@ -50,7 +50,7 @@ class Game:
 
     def roundStart(self):
         self.round+=1
-        msgs=[Response('message', f'Start of round {self.round}', self.id), Response('RoundStart', '', self.id)]
+        msgs=[Response('message', f'Start of round {self.round}', self.id), Response('RoundStart', '', self.id)] +self.broadcastPlayersDice()
         self.oldBid=None
         for player in self.players:
             player.rollAll()
@@ -93,6 +93,7 @@ class Game:
         else: 
             loser = bidder
         self.loser = loser
+        print(f"loser for round {self.round} is {loser.uid}")
         return[Response('BidAcknowledge', 'Challenge accepted', self.connections[player]),
             Response("LoseDie", f"{loser.uid}, please select a die to lose", self.connections[loser.uid])]
     
@@ -151,8 +152,11 @@ class Game:
             
             raise Exception()
     
-
-
+    def broadcastPlayersDice(self):
+        data={}
+        for player in self.players:
+            data[player.uid]=(player.dieInfo())
+        return [(Response('PlayersDiceInfo', data, self.id))]
     #checking state functions    
     def playing(self):
         return self.state== GameState.PLAYING

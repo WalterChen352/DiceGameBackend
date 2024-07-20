@@ -43,6 +43,7 @@ class Player:
         result=[]
         for die in self.dice:
             result.append(die.toString())
+        return result
     def info(self):
         return {
             'dice': self.dieInfo(),

@@ -4,6 +4,7 @@ class Die:
     def __init__(self, faces):
         self.frozen=False
         self.faces=faces
+        self.faceUpIndex=None
     def roll(self):
         if not self.frozen:
             self.faceUpIndex=random.randint(0, len(self.faces)-1)
@@ -16,17 +17,21 @@ class Die:
         result =[]
         for face in self.faces:
             result.append(face.toString())
-        return {'faces': result, 'faceIndex': self.faceUpIndex }
+        return {'faces': result, 'faceIndex': self.faceUpIndex if self.faceUpIndex is not None else None }
+    def info(self):
+        return {'faces': self.toString(), 'faceIndex': self.faceUpIndex}
+    def blank(self):
+        self.faces[self.faceUpIndex]= BlankFace()
 
 class HeartDie(Die):
     def __init__(self):
-        self.faces=heartDieFaces
-        self.frozen=False
-        
+        super().__init__(heartDieFaces)
 
 class Face:
     def __init__(self):
         return None
+    def toString(self):
+        return str(self.value)
 
 class NumberFace(Face):
     def __init__(self, val):
@@ -41,17 +46,18 @@ class NumberFace(Face):
         self.value+=val
     def set(self, val):
         self.value=val
-    def toString(self):
-        return str(self.value)
+
 
 class PowerFace(Face):
     def __init__(self):
-        return None
+        self.value=None
+
+class PlusFace(PowerFace):
+    def __init__(self):
+        self.value="P"        
 
 class BlankFace(Face):
     def __init__(self):
-        return None
-    def toString():
-        return ''
+        self.value=''
     
 heartDieFaces=[NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
