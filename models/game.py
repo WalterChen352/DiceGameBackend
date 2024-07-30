@@ -153,9 +153,12 @@ class Game:
             raise Exception()
     
     def broadcastPlayersDice(self):
-        data={}
+        data=[]
         for player in self.players:
-            data[player.uid]=(player.dieInfo())
+            data.append({'dice': player.dieInfo(),
+                        'pid': player.uid
+                                  })
+
         return [(Response('PlayersDiceInfo', data, self.id))]
     #checking state functions    
     def playing(self):
