@@ -13,6 +13,7 @@ class Game:
         self.startingLives = startingLives
         self.loser= None
         self.round=0
+        self.wildFace=1
 
     def addPlayer(self, pid, sid):
         self.players.append(Player(self.startingLives, pid))
@@ -111,6 +112,7 @@ class Game:
             msgs+=[ (Response("message", f"{self.players[0].uid} has won the game", self.id))]
             return msgs
         self.loser= None
+        self.cleanUp()
         print(f'msgs before round start called {msgs}')
         msgs+= self.roundStart()
         print(f'msgs after round start called {msgs}')
@@ -131,6 +133,8 @@ class Game:
         for player in self.players:
             rolls=player.getRolls()['count']
             total+=rolls[face]
+            if(face != self.wildFace):
+                total+=rolls[self.wildFace]
         print(f'checking for {face}. {total} {face}\'s found against {self.oldBid.quantity}')
         return self.oldBid.quantity <= total
 
@@ -160,6 +164,11 @@ class Game:
                                   })
 
         return [(Response('PlayersDiceInfo', data, self.id))]
+    
+    def cleanUp(self):
+        for player in self.players:
+            player.cleanUp()
+
     #checking state functions    
     def playing(self):
         return self.state== GameState.PLAYING

@@ -49,3 +49,6 @@ class Player:
             'dice': self.dieInfo(),
             'rolls': self.getRolls()
         }
+    def cleanUp(self):
+        for die in self.dice:
+            die.faceUpIndex= None
