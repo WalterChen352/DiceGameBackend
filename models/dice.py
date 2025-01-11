@@ -27,6 +27,14 @@ class HeartDie(Die):
     def __init__(self):
         super().__init__(heartDieFaces)
 
+class MinusDie(Die):
+    def __init__(self):
+        super().__init__(minusDieFaces)
+
+class PlusDie(Die):
+    def __init__(self):
+        super().__init__(plusDieFaces)
+
 class Face:
     def __init__(self):
         return None
@@ -54,10 +62,16 @@ class PowerFace(Face):
 
 class PlusFace(PowerFace):
     def __init__(self):
-        self.value="P"        
+        self.value="+"  
+
+class MinusFace(PowerFace):
+    def __init__(self):
+        self.value="-"      
 
 class BlankFace(Face):
     def __init__(self):
         self.value=''
     
 heartDieFaces=[NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
+plusDieFaces=[PlusFace(), PlusFace(), PlusFace(), PlusFace(),PlusFace(), PlusFace() ]
+minusDieFaces=[MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace()]

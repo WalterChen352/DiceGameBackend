@@ -13,9 +13,8 @@ class Player:
             self.dice.append(HeartDie())
     def lose(self, dieIndex):
         self.dice.pop(dieIndex)
-    def getBid(self):
-        pass
-        #TODO get input from player
+    def add(self, die):
+        self.dice.append(die)
     def rollAll(self):
         for die in self.dice:
             die.roll()

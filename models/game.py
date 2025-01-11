@@ -1,12 +1,13 @@
 from.player import Player
+from.dice import *
 import random
 from enum import Enum
 
-GameState = Enum('GameState', ['INIT', 'PLAYING', 'OVER'])
+GameState = Enum('GameState', ['DRAFT', 'PREBID', 'BIDDING', 'POSTBID'])
 
 class Game:
     def __init__(self,startingLives, gameID):
-        self.state= GameState.INIT
+        self.state= GameState.POSTBID
         self.id= gameID
         self.connections={}
         self.players=[]
@@ -14,6 +15,41 @@ class Game:
         self.loser= None
         self.round=0
         self.wildFace=1
+        self.draftPool=[]
+    
+    def nextPhase(self):
+        match(self.state):
+            case(GameState.DRAFT):
+                self.state=GameState.PREBID
+                return self.RoundInit() +self.PreBidInit()
+            case(GameState.PREBID):
+                self.state=GameState.BIDDING
+                return self.BiddingInit()
+            case(GameState.BIDDING):
+                self.state=GameState.POSTBID
+                return + self.PostBidInit()
+            case(GameState.POSTBID):
+                self.state=GameState.DRAFT
+                return   self.DraftInit()
+            
+    def DraftInit(self):
+        msgs=[]
+        self.generateDraftDice()
+        entries=[]
+        for entry in self.draftPool:
+            entries.append(entry.to_dict())
+        msgs.append(Response('DraftInfo', entries, self.id))
+        return msgs
+    
+    def PreBidInit(self):
+        msgs=[]
+        return msgs
+    def BiddingInit(self):
+        msgs=[]
+        return msgs
+    def PostBidInit(self):
+        msgs=[]
+        return msgs
 
     def addPlayer(self, pid, sid):
         self.players.append(Player(self.startingLives, pid))
@@ -46,10 +82,9 @@ class Game:
            #raise Exception()
         random.shuffle(self.players)
         self.currPlayerIndex=0
-        self.state=GameState.PLAYING
-        return self.roundStart()
+        return self.nextPhase()
 
-    def roundStart(self):
+    def RoundInit(self):
         self.round+=1
         msgs=[Response('message', f'Start of round {self.round}', self.id), Response('RoundStart', '', self.id)] +self.broadcastPlayersDice()
         self.oldBid=None
@@ -114,7 +149,7 @@ class Game:
         self.loser= None
         self.cleanUp()
         print(f'msgs before round start called {msgs}')
-        msgs+= self.roundStart()
+        msgs+= self.nextPhase()
         print(f'msgs after round start called {msgs}')
         return msgs
     
@@ -169,15 +204,54 @@ class Game:
         for player in self.players:
             player.cleanUp()
 
-    #checking state functions    
-    def playing(self):
-        return self.state== GameState.PLAYING
-    def init(self):
-        return self.state== GameState.INIT
-    def over(self):
-        return self.state==GameState.OVER
-    
             
+    def generateDraftDice(self):
+        self.draftPool=[]
+        for i in range(0, len(self.players)+1):
+            j =  random.randint(0,1)
+            if j ==0:
+                self.draftPool.append(DraftEntry([PlusDie()]))
+            else:
+                self.draftPool.append(DraftEntry([MinusDie()]))
+        return self.draftPool
+
+    def handleSelection(self, player, index):
+        msgs=[]
+        #add check for correct player turn to draft
+        if self.draftPool[index].drafted():
+            return [Response('DraftError', 'Die has already been drafted'), self.connections[player]]
+        self.draftPool[index].draft(player)
+        msgs.append(Response('DraftAck', 'Die successfully drafted', self.connections[player]))
+
+        return msgs
+
+    def resolveDraft(self):
+        for draftEntry in self.draftPool:
+            if draftEntry.player is not None:
+                player =self.players[0] #TODO lookup proper player
+                for die in draftEntry.dice:
+                    player.add(die)
+
+
+
+class DraftEntry:
+    def __init__(self, dice):
+        self.drafted=False
+        self.dice=dice
+        self.player=None
+    def draft(self, player):
+        self.drafted=True
+        self.player=player
+    def to_dict(self):
+        dice = []
+        for die in self.dice:
+            dice.append(die.toString())
+        return {
+            'drafted': self.drafted,
+            'dice': dice,
+            'player': self.player
+        }
+
 
 class Bid:
     def __init__(self, quantity, face):
