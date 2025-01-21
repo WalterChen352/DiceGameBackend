@@ -33,8 +33,11 @@ class Player:
             'dice':dice
         }
     def postEffects(self):
-        #TODO 
-        return
+        effects = []
+        for die in self.dice:
+            if isinstance(die.faceUp(), PowerFace) and die.faceUp().timing == Timing.POST:
+                effects.append(die)
+        return effects
     def preEffects(self):
         #TODO
         return

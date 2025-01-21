@@ -157,6 +157,14 @@ def handleLoseDie(data):
     game=games[rid]
     sendMSGS(game.handleLoseDie( username, dieIndex))
 
+@socketio.on('DraftSelection')
+def handleDraftSelection(data):
+    print(f"selecting for draft")
+    index=data['index']
+    username = data['username']
+    rid = players[username]
+    game=games[rid]
+    sendMSGS(game.handleSelection(username, index))
 def auth(uid, rid):
     if uid not in players.keys() or players[uid] != rid:
         raise Exception()

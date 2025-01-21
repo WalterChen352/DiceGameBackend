@@ -34,11 +34,17 @@ class Game:
             
     def DraftInit(self):
         msgs=[]
+        msgs.append(Response('message', 'Draft has started', self.id))
+        msgs.append(Response('Draft', '', self.id))
+        self.setDraftOrder()
         self.generateDraftDice()
         entries=[]
+        self.draftIndex=0
         for entry in self.draftPool:
             entries.append(entry.to_dict())
         msgs.append(Response('DraftInfo', entries, self.id))
+        player=self.draftOrder[self.draftIndex]
+        msgs.append(Response('DraftTurn',None, self.connections[player]))
         return msgs
     
     def PreBidInit(self):
@@ -208,37 +214,60 @@ class Game:
     def generateDraftDice(self):
         self.draftPool=[]
         for i in range(0, len(self.players)+1):
-            j =  random.randint(0,1)
+            j =  random.randint(0, 1)
             if j ==0:
-                self.draftPool.append(DraftEntry([PlusDie()]))
+                d= PlusDie()
+
             else:
-                self.draftPool.append(DraftEntry([MinusDie()]))
+                d= MinusDie()
+            self.draftPool.append(DraftEntry([d], d.name))
         return self.draftPool
 
     def handleSelection(self, player, index):
         msgs=[]
+        print(f'handling selection {index}')
         #add check for correct player turn to draft
-        if self.draftPool[index].drafted():
+        if self.draftPool[index].drafted:
             return [Response('DraftError', 'Die has already been drafted'), self.connections[player]]
         self.draftPool[index].draft(player)
+        #acknowledge
         msgs.append(Response('DraftAck', 'Die successfully drafted', self.connections[player]))
-
+        #update draft to everyone
+        msgs.append(Response('message', f'{player} has drafted {self.draftPool[index].name}', self.id))
+        entries=[]
+        for entry in self.draftPool:
+            entries.append(entry.to_dict())
+        msgs.append(Response('DraftInfo', entries, self.id))
+        #send the new draft message to someone else
+        #if everyone has drafted move on
+        self.draftIndex=self.draftIndex+1
+        if( self.draftIndex < len(self.draftOrder)):
+            player = self.draftOrder[self.draftIndex]
+            msgs.append(Response('DraftTurn',None, self.connections[player] ))
+        else:
+            self.resolveDraft()
+            return self.nextPhase()
         return msgs
 
     def resolveDraft(self):
         for draftEntry in self.draftPool:
             if draftEntry.player is not None:
-                player =self.players[0] #TODO lookup proper player
+                print(f'player {draftEntry.player} is getting {draftEntry.name}')
+                player = next((p for p in self.players if p.uid == draftEntry.player), None)
                 for die in draftEntry.dice:
                     player.add(die)
+
+    def setDraftOrder(self):
+        self.draftOrder= self.playerList()
 
 
 
 class DraftEntry:
-    def __init__(self, dice):
+    def __init__(self, dice, name):
         self.drafted=False
         self.dice=dice
         self.player=None
+        self.name=name
     def draft(self, player):
         self.drafted=True
         self.player=player
@@ -249,7 +278,8 @@ class DraftEntry:
         return {
             'drafted': self.drafted,
             'dice': dice,
-            'player': self.player
+            'player': self.player,
+            'name': self.name
         }
 
 
@@ -271,6 +301,8 @@ class Response:
         self.msg = message
         self.data = body
         self.target = recepient
+
+
 
 
 def setPlayerOrder(loser, players):
