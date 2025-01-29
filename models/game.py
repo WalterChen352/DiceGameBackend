@@ -18,19 +18,23 @@ class Game:
         self.draftPool=[]
     
     def nextPhase(self):
+        print(f'state before update is {self.state}')
+        res=None
         match(self.state):
             case(GameState.DRAFT):
-                self.state=GameState.PREBID
-                return self.RoundInit() +self.PreBidInit()
-            case(GameState.PREBID):
-                self.state=GameState.BIDDING
-                return self.BiddingInit()
+                self.state=GameState.BIDDING #PREBID
+                res =self.RoundInit() #+self.PreBidInit()
+            # case(GameState.PREBID):
+            #     self.state=GameState.BIDDING
+            #     res=self.BiddingInit()
             case(GameState.BIDDING):
                 self.state=GameState.POSTBID
-                return + self.PostBidInit()
+                res= self.PostBidInit()
             case(GameState.POSTBID):
                 self.state=GameState.DRAFT
-                return   self.DraftInit()
+                res= self.DraftInit()
+        print(f'state is now {self.state}')
+        return res
             
     def DraftInit(self):
         msgs=[]
@@ -44,6 +48,7 @@ class Game:
             entries.append(entry.to_dict())
         msgs.append(Response('DraftInfo', entries, self.id))
         player=self.draftOrder[self.draftIndex]
+        msgs.append(Response('message', f'{player}\'s turn to draft', self.id))
         msgs.append(Response('DraftTurn',None, self.connections[player]))
         return msgs
     
@@ -54,9 +59,20 @@ class Game:
         msgs=[]
         return msgs
     def PostBidInit(self):
-        msgs=[]
+        msgs=self.broadcastPlayersDice()+self.revealAllRolls()
+        msgs.append(Response('message', 'Start of post-bidding effects', self.id))
+        # for player in self.players:
+        #     abilities=[]
+        #     for die in player.getEffects(Timing.POST):
+        #         abilities.append(die.faceUp().toDict())
+        #     print(f'sending {abilities} to {player.uid}')
+        #     msgs.append(Response('PostPowers', abilities, self.connections[player.uid]))
         return msgs
-
+    
+    def HandlePostPower(self, player, targets):
+        # for target in targets:
+        #     if 
+        pass
     def addPlayer(self, pid, sid):
         self.players.append(Player(self.startingLives, pid))
         print(f"added {pid} to game {self.id} with sid {sid}")
@@ -123,6 +139,7 @@ class Game:
          Response("GetBid", f"Asking {np.uid} for bid", self.connections[np.uid])]
         
     def challenge(self, player):
+        msgs=[]
         if self.currPlayer().uid != player:
             return [Response("BidError", "Not player turn", self.connections[player])]
         if self.oldBid is None:
@@ -136,16 +153,21 @@ class Game:
             loser = bidder
         self.loser = loser
         print(f"loser for round {self.round} is {loser.uid}")
-        return[Response('BidAcknowledge', 'Challenge accepted', self.connections[player]),
-            Response("LoseDie", f"{loser.uid}, please select a die to lose", self.connections[loser.uid])]
+        msgs.append(Response('BidAcknowledge', 'Challenge accepted', self.connections[player]))
+        msgs= msgs + self.revealAllRolls()
+        loseDie= Prompt(f'{loser.uid}, please select a die to lose', 'die', 1, 1, 'HeartDie')
+        msgs.append(Response("Prompt", {'promptEvent': 'LoseDie', 'prompts': [loseDie.toDict()]}, self.connections[loser.uid]))
+        print(msgs)
+        return msgs
     
-    def handleLoseDie(self, player, dieIndex):
+    def handleLoseDie(self, player, selection):
         if self.loser.uid != player:
             return [Response("BidError", "Not player turn", self.connections[player])]
+        print(f'loseDie data is {selection}')
+        dieIndex=selection[0][0][1]
         self.loser.lose(dieIndex)
         self.loser.lives-=1
-        msgs = [Response("LoseDieAck","sucessfully lost a die", self.connections[player]),
-            Response("message", f"Player {player} has lost a die", self.id)]
+        msgs = [Response("message", f"Player {player} has lost a die", self.id)]
         if self.loser.lives == 0:
             msgs+=([Response("LoseGame", "You have lost the Game", self.connections[player]), Response("message", f"{player} has lost the game", self.id)])
             self.removePlayer(player)
@@ -153,9 +175,10 @@ class Game:
             msgs+=[ (Response("message", f"{self.players[0].uid} has won the game", self.id))]
             return msgs
         self.loser= None
-        self.cleanUp()
+        #self.cleanUp()
         print(f'msgs before round start called {msgs}')
         msgs+= self.nextPhase()
+        
         print(f'msgs after round start called {msgs}')
         return msgs
     
@@ -206,10 +229,16 @@ class Game:
 
         return [(Response('PlayersDiceInfo', data, self.id))]
     
-    def cleanUp(self):
+    def revealAllRolls(self):
+        msgs=[]
         for player in self.players:
-            player.cleanUp()
-
+            msgs.append(Response('DiceRolls', player.getRolls(), self.id))
+        return msgs
+    
+    def cleanUp(self):
+        # for player in self.players:
+        #     player.cleanUp()
+        pass
             
     def generateDraftDice(self):
         self.draftPool=[]
@@ -243,10 +272,11 @@ class Game:
         self.draftIndex=self.draftIndex+1
         if( self.draftIndex < len(self.draftOrder)):
             player = self.draftOrder[self.draftIndex]
+            msgs.append(Response('message', f'{player}\'s turn to draft', self.id))
             msgs.append(Response('DraftTurn',None, self.connections[player] ))
         else:
             self.resolveDraft()
-            return self.nextPhase()
+            return msgs +self.nextPhase()
         return msgs
 
     def resolveDraft(self):
@@ -281,6 +311,7 @@ class DraftEntry:
             'player': self.player,
             'name': self.name
         }
+       
 
 
 class Bid:

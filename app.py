@@ -165,6 +165,28 @@ def handleDraftSelection(data):
     rid = players[username]
     game=games[rid]
     sendMSGS(game.handleSelection(username, index))
+
+@socketio.on('Init')
+def handleInit(data):
+    uid = data['uid']
+    if uid not in players.keys():
+        emit('NotInGame', to = request.sid )
+
+@socketio.on('PromptResponse')
+def handlePromptResponse(data):
+    uid=data['uid']
+    rid=players[uid]
+    game=games[rid]
+    print(f'handling prompt response of {data["event"]}')
+    match(data['event']):
+        case 'LoseDie' :
+            sendMSGS(game.handleLoseDie(uid, data['selections']))
+        case'PostBid':
+            sendMSGS(game.handlePostBid(uid, data['selections']))
+        case'PreBid':
+            pass
+
+
 def auth(uid, rid):
     if uid not in players.keys() or players[uid] != rid:
         raise Exception()

@@ -12,7 +12,9 @@ class Player:
         for i in range (0, startingLives):
             self.dice.append(HeartDie())
     def lose(self, dieIndex):
+        print(f'player {self.uid} losing die at index {dieIndex}. dice before is {len(self.dice)}')
         self.dice.pop(dieIndex)
+        print(len(self.dice))
     def add(self, die):
         self.dice.append(die)
     def rollAll(self):
@@ -30,14 +32,18 @@ class Player:
         return {
             'rolls': rolls,
             'count': count,
-            'dice':dice
+            'dice':dice,
+            'pid': self.uid
         }
-    def postEffects(self):
+    def getEffects(self, timing):
         effects = []
         for die in self.dice:
-            if isinstance(die.faceUp(), PowerFace) and die.faceUp().timing == Timing.POST:
+            if isinstance(die.faceUp(), PowerFace) and die.faceUp().timing == timing:
                 effects.append(die)
         return effects
+    def postEffects(self, targets):
+        #TODO
+        return
     def preEffects(self):
         #TODO
         return

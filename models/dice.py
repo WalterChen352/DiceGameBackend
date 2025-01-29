@@ -11,6 +11,9 @@ def freeze(die):
 def decrement(face):
     face.value=face.value-1
 
+def reroll(die):
+    die.roll()
+
 class Die:
     def __init__(self, faces, name):
         self.frozen=False
@@ -24,6 +27,7 @@ class Die:
             self.frozen=False
         return
     def faceUp(self):
+        #print(f'{self.name} has faceUp of {self.faceUpIndex}')
         return self.faces[self.faceUpIndex]
     def consume(self):
         self.faces[self.faceUpIndex]=BlankFace()
@@ -57,11 +61,15 @@ class Face:
     def __init__(self, value):
         self.value=value
     def toString(self):
-        return str(self.value)
+        return {
+         'value':   str(self.value),
+         'type': self.type
 
+        }
 class NumberFace(Face):
     def __init__(self, val):
         self.value=val
+        self.type='number'
     def value(self):
         return self.value
     def increment(self):
@@ -81,6 +89,7 @@ class Timing(Enum):
 class PowerFace(Face):
     def __init__(self, value:str, t:Timing, c:bool, f:Callable, targetType:str):
         super().__init__(value)
+        self.type='power'
         self.timing = t
         self.consume = c
         self.power = f
@@ -90,23 +99,50 @@ class PowerFace(Face):
         self.power(self.target)
     def setTarget(self, target):
         self.target=target
+    def prompt(self):
+        return self.prompt.toDict()
 
 class PlusFace(PowerFace):
     def __init__(self):
-        super().__init__("+", Timing.POST, True,increment, "Face")  
+        super().__init__("+", Timing.POST, True,increment, "Face") 
+        self.prompt= Prompt('Choose a face to increment', 'face', 0, 1, faceType='number') 
 
 class MinusFace(PowerFace):
     def __init__(self):
-        super().__init__("-", Timing.POST, True,decrement, "Face") 
+        super().__init__("-", Timing.POST, True,decrement, "Face")
+        self.prompt= Prompt('Choose a face to decrement', 'face', 0, 1, faceType='number')
 
 class FreezeFace(PowerFace):
     def __init__(self):
-        super().__init__("F", Timing.POST, True,freeze, "Die")     
+        super().__init__("F", Timing.POST, True,freeze, "Die")
+        self.prompt= Prompt('Choose a face to freeze', 'die', 0, 1)     
 
-class BlankFace(Face):
+class RerollFace(PowerFace):
+    def __init__(self):
+        super().__init__("R", Timing.PRE, True, reroll, "Die")
+
+class BlankFace(PowerFace):
     def __init__(self):
         super().__init__("") 
     
+class Prompt:
+    def __init__(self, prompt, targetType, minSelections, maxSelections, dieType='', faceType=''):
+        self.prompt=prompt
+        self.targetType=targetType
+        self.minSelections=minSelections
+        self.maxSelections=maxSelections
+        self.dieType=dieType
+        self.faceType=faceType
+    def toDict(self):
+        return {
+            'prompt': self.prompt,
+            'minSelections': self.minSelections,
+            'maxSelections': self.maxSelections,
+            'targetType': self.targetType,
+            'dieType': self.dieType,
+            'faceType': self.faceType
+        }
+
 heartDieFaces=[NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
 plusDieFaces=[PlusFace(), PlusFace(), PlusFace(), PlusFace(),PlusFace(), PlusFace() ]
 minusDieFaces=[MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace()]
