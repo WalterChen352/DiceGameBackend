@@ -178,6 +178,7 @@ def handlePromptResponse(data):
     rid=players[uid]
     game=games[rid]
     print(f'handling prompt response of {data["event"]}')
+    print(f'selections are {data["selections"]}')
     match(data['event']):
         case 'LoseDie' :
             sendMSGS(game.handleLoseDie(uid, data['selections']))

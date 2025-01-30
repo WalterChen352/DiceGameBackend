@@ -29,13 +29,17 @@ class Player:
             rolls.append(die.faces[die.faceUpIndex].value)
             dice.append(die.toString())
         count=Counter(rolls)
-        return {
+        print('getting rolls !!!')
+        
+        data= {
             'rolls': rolls,
             'count': count,
             'dice':dice,
             'pid': self.uid
         }
-    def getEffects(self, timing):
+        print(data)
+        return data
+    def getEffects(self, timing)->list[Die]:
         effects = []
         for die in self.dice:
             if isinstance(die.faceUp(), PowerFace) and die.faceUp().timing == timing:

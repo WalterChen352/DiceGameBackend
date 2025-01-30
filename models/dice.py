@@ -3,12 +3,14 @@ from enum import Enum
 from typing import Callable
 
 def increment(face):
+    print(f'incrementing face from {face.value} to {face.value+1}')
     face.value= face.value+1
 
 def freeze(die):
     die.frozen=True
 
 def decrement(face):
+    print(f'decrementing face from {face.value} to {face.value-1}')
     face.value=face.value-1
 
 def reroll(die):
@@ -99,40 +101,42 @@ class PowerFace(Face):
         self.power(self.target)
     def setTarget(self, target):
         self.target=target
-    def prompt(self):
+    def getPrompt(self):
         return self.prompt.toDict()
 
 class PlusFace(PowerFace):
     def __init__(self):
-        super().__init__("+", Timing.POST, True,increment, "Face") 
+        super().__init__("+", Timing.POST, True,increment, "face") 
         self.prompt= Prompt('Choose a face to increment', 'face', 0, 1, faceType='number') 
 
 class MinusFace(PowerFace):
     def __init__(self):
-        super().__init__("-", Timing.POST, True,decrement, "Face")
+        super().__init__("-", Timing.POST, True,decrement, "face")
         self.prompt= Prompt('Choose a face to decrement', 'face', 0, 1, faceType='number')
 
 class FreezeFace(PowerFace):
     def __init__(self):
-        super().__init__("F", Timing.POST, True,freeze, "Die")
+        super().__init__("F", Timing.POST, True,freeze, "die")
         self.prompt= Prompt('Choose a face to freeze', 'die', 0, 1)     
 
 class RerollFace(PowerFace):
     def __init__(self):
-        super().__init__("R", Timing.PRE, True, reroll, "Die")
+        super().__init__("R", Timing.PRE, True, reroll, "die", )
 
-class BlankFace(PowerFace):
+class BlankFace(Face):
     def __init__(self):
-        super().__init__("") 
+        super().__init__("")
+        self.type='blank' 
     
 class Prompt:
-    def __init__(self, prompt, targetType, minSelections, maxSelections, dieType='', faceType=''):
+    def __init__(self, prompt, targetType, minSelections, maxSelections, dieType='', faceType='', onlyOwnDice=False):
         self.prompt=prompt
         self.targetType=targetType
         self.minSelections=minSelections
         self.maxSelections=maxSelections
         self.dieType=dieType
         self.faceType=faceType
+        self.onlyOwnDice=onlyOwnDice
     def toDict(self):
         return {
             'prompt': self.prompt,
@@ -140,7 +144,8 @@ class Prompt:
             'maxSelections': self.maxSelections,
             'targetType': self.targetType,
             'dieType': self.dieType,
-            'faceType': self.faceType
+            'faceType': self.faceType,
+            'onlyOwnDice': self.onlyOwnDice
         }
 
 heartDieFaces=[NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
