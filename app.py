@@ -8,7 +8,17 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+class Messenger():
+    def __init__(self, socketio):
+        self.socketio=socketio
+    def MSG(self,msg,data, target):
+        print(f"sending message of type {msg} to {target}")
+        self.socketio.emit(msg, data, to=target)
+    def MSGS(self, msgs):
+        for msg in msgs:
+            self.MSG(msg.msg, msg.data, msg.target)
 
+m=Messenger(socketio) #messenger ct
 games = {} #map game code -> game
 players={} #map pid to game code
 # @app.route("/<game_id>")
@@ -28,7 +38,7 @@ def make_game():
     while generateRoomCode in games.keys():
         gameCode= generateRoomCode()
     print(f"Gamecode: {gameCode}")
-    games[gameCode]= Game(lives, gameCode)
+    games[gameCode]= Game(lives, gameCode, m)
     #print(f"SID: {request.sid}"
     return jsonify({"game_id": gameCode})
 
@@ -54,7 +64,7 @@ def socketGame(data):
     while generateRoomCode in games.keys():
         gameCode= generateRoomCode()
     print(f"Gamecode: {gameCode}")
-    game= Game(lives, gameCode)
+    game= Game(lives, gameCode, m)
     games[gameCode]=game
     #print(f"SID: {request.sid}"
     join_room(gameCode)

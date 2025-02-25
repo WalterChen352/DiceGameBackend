@@ -25,8 +25,6 @@ class Die:
     def roll(self):
         if not self.frozen:
             self.faceUpIndex=random.randint(0, len(self.faces)-1)
-        else:
-            self.frozen=False
         return
     def faceUp(self):
         #print(f'{self.name} has faceUp of {self.faceUpIndex}')
@@ -37,7 +35,7 @@ class Die:
         result =[]
         for face in self.faces:
             result.append(face.toString())
-        return {'faces': result, 'faceIndex': self.faceUpIndex if self.faceUpIndex is not None else None }
+        return {'faces': result, 'faceIndex': self.faceUpIndex if self.faceUpIndex is not None else None, 'name': self.name, 'frozen': self.frozen }
     def info(self):
         return {'faces': self.toString(), 'faceIndex': self.faceUpIndex}
     def blank(self):
@@ -45,19 +43,22 @@ class Die:
 
 class HeartDie(Die):
     def __init__(self):
-        super().__init__(heartDieFaces, "Heart Die")
+        super().__init__(heartDieFaces(), "Heart Die")
 
 class MinusDie(Die):
     def __init__(self):
-        super().__init__(minusDieFaces, "Minus Die")
+        super().__init__(minusDieFaces(), "Minus Die")
 
 class PlusDie(Die):
     def __init__(self):
-        super().__init__(plusDieFaces, "Plus Die")
-
+        super().__init__(plusDieFaces(), "Plus Die")
+        print(f'making a plus die with {self.faces} faces')
 class FreezeDie(Die):
     def __init__(self):
-        super().__init__(freezeDieFaces, "Freeze Die")
+        super().__init__(freezeDieFaces(), "Freeze Die")
+class RerollDie(Die):
+    def __init__(self):
+        super().__init__(rerollDieFaces(), "Reroll Die")
 
 class Face:
     def __init__(self, value):
@@ -66,7 +67,6 @@ class Face:
         return {
          'value':   str(self.value),
          'type': self.type
-
         }
 class NumberFace(Face):
     def __init__(self, val):
@@ -112,16 +112,17 @@ class PlusFace(PowerFace):
 class MinusFace(PowerFace):
     def __init__(self):
         super().__init__("-", Timing.POST, True,decrement, "face")
-        self.prompt= Prompt('Choose a face to decrement', 'face', 0, 1, faceType='number')
+        self.prompt= Prompt('Choose a face to decrement', 'face', 0, 1, faceType='number',)
 
 class FreezeFace(PowerFace):
     def __init__(self):
         super().__init__("F", Timing.POST, True,freeze, "die")
-        self.prompt= Prompt('Choose a face to freeze', 'die', 0, 1)     
+        self.prompt= Prompt('Choose a die to freeze', 'die', 0, 1)     
 
 class RerollFace(PowerFace):
     def __init__(self):
         super().__init__("R", Timing.PRE, True, reroll, "die", )
+        self.prompt=Prompt('Choose one of your dice to reroll', 'die', 0, 1, onlyOwnDice=True)
 
 class BlankFace(Face):
     def __init__(self):
@@ -148,8 +149,13 @@ class Prompt:
             'onlyOwnDice': self.onlyOwnDice
         }
 
-heartDieFaces=[NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
-plusDieFaces=[PlusFace(), PlusFace(), PlusFace(), PlusFace(),PlusFace(), PlusFace() ]
-minusDieFaces=[MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace()]
-freezeDieFaces=[FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace()]
-
+def heartDieFaces():
+    return [NumberFace(1), NumberFace(2), NumberFace(3), NumberFace(4), NumberFace(5), NumberFace(6)] 
+def plusDieFaces():
+    return[PlusFace(), PlusFace(), PlusFace(), PlusFace(),PlusFace(), PlusFace() ]
+def minusDieFaces():
+    return [MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace(), MinusFace()]
+def freezeDieFaces():
+    return [FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace(),FreezeFace()]
+def rerollDieFaces():
+    return [RerollFace(), RerollFace(), RerollFace(), RerollFace()]
